@@ -1,40 +1,78 @@
-console.log("START");
+function processParts(parts) {
+
+    let note = "";
+
+    for (const part of parts) {
+    	if (part.parts) {
+	    note += processParts(part.parts);
+    	} else if (part.contentType == "text/plain") {
+	    note += part.body;
+	}
+    }
+
+    return note;
+}
 
 async function processMessage(message, index, array) {
-    console.log("processMessage() STARTED");
-    console.log(message);
-
-    console.log("FETCHING URL");
     let gettingUrl = browser.storage.sync.get("everdo_api_url");
     EVERDO_URL = await gettingUrl;
 
-    console.log("FETCHING KEY");
-    let gettingKey = await browser.storage.sync.get("everdo_api_key");
+    let gettingKey = browser.storage.sync.get("everdo_api_key");
     EVERDO_KEY = await gettingKey;
 
     var req = new XMLHttpRequest();
 
     req.open("POST", EVERDO_URL.everdo_api_url + "/api/items?key=" + EVERDO_KEY.everdo_api_key, true);
-    console.log(EVERDO_URL.everdo_api_url + "/api/items?key=" + EVERDO_KEY.everdo_api_key);
+
     req.setRequestHeader("Content-Type", "application/json");
-    req.addEventListener("load", function() {
-      console.log(req.response);
-    });
     req.addEventListener("timeout", function() {
       console.log("timeout");
     });
     req.addEventListener("error", function() {
       console.log("error");
     });
-    console.log('{"title": "' + message.subject + '", "note": "<b>Example</b>" }');
-    req.send('{"title": "' + message.subject + '", "note": "<b>Example</b>" }');
-    console.log("processMessage() FINISHED");
+
+    note = "----------------------------------------------------------------\n";
+    note += "Author: " + message.author + "\n";
+    note += "Subject: " + message.subject + "\n";
+    note += "Date: " + message.date + "\n";
+
+    if (message.recipients.length > 0) {
+        note += "Recipients: ";
+        for (const recipient of message.recipients){
+		note += recipient + ", ";
+        }
+	note += "\n";
+    }
+
+    if (message.ccList.length > 0) {
+        note += "CC: ";
+        for (const recipient of message.ccList){
+		note += recipient + ", ";
+        }
+	note += "\n";
+    }
+
+    if (message.bccList.length > 0) {
+        note += "BCC: ";
+        for (const recipient of message.bccList){
+		note += recipient + ", ";
+        }
+	note += "\n";
+    }
+
+    msg = await messenger.messages.getFull(message.id);
+    console.log(msg);
+
+    note += processParts(msg.parts);
+
+    note += "----------------------------------------------------------------\n";
+
+    req.send('{"title": "' + message.subject + '", "note": ' + JSON.stringify(note) + ' }');
 };
 
 async function startProcess(info) {
-    console.log("startProcess() STARTED");
     info.selectedMessages.messages.forEach(processMessage);
-    console.log("startProcess() FINISHED");
 };
 
 browser.menus.create({
