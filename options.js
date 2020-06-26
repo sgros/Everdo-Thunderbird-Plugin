@@ -19,11 +19,11 @@ function restoreOptions() {
   }
 
   function setTaskTitle(result) {
-    document.querySelector("#task_title").value = result.task_title || "";
+    document.querySelector("#task_title").value = result.task_title || "%S";
   }
 
   function setTaskTemplate(result) {
-    document.querySelector("#task_template").value = result.task_template || "";
+    document.querySelector("#task_template").value = result.task_template || "===============================================================\nAuthor: %A\nTo: %T\nCC: %C\nDate; %D\n===============================================================\n\n%T";
   }
 
   function onError(error) {
