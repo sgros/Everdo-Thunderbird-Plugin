@@ -8,11 +8,24 @@
   <body>
 
     <form>
-        <label>Everdo API URL<input type="text" id="everdo_api_url" ></label><br />
-	<label>Everdo API Key<input type="text" id="everdo_api_key" ></label><br />
+        <h2>Everdo API</h2>
+
+        <label>Everdo API URL: <input type="text" id="everdo_api_url" ></label><br />
+	<label>Everdo API Key: <input type="text" id="everdo_api_key" ></label><br />
 	<br />
-        <button type="submit">Save</button>
+
+        <h2>Task template</h2>
+
+        <label>Task title: <input type="text" id="task_title" ></label><br />
+	<textarea rows="10" cols="80" id="task_template" ></textarea><br />
+
+	<button type="submit">Save</button>
     </form>
+
+    <p>
+    Use the following placeholders in the title and description:<br />
+    %S (Subject), %A (Author/From), %T (To), %C (CC), %B (Bcc), %D (Date), %T (Plain text part of message) <br />
+    </p>
 
     <script src="options.js"></script>
 

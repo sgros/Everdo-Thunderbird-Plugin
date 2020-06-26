@@ -20,6 +20,12 @@ async function processMessage(message, index, array) {
     let gettingKey = browser.storage.sync.get("everdo_api_key");
     EVERDO_KEY = await gettingKey;
 
+    let taskTitle = browser.storage.sync.get("task_title");
+    TASK_TITLE = await taskTitle;
+
+    let taskTemplate = browser.storage.sync.get("task_template");
+    TASK_TEMPLATE = await taskTemplate;
+
     var req = new XMLHttpRequest();
 
     req.open("POST", EVERDO_URL.everdo_api_url + "/api/items?key=" + EVERDO_KEY.everdo_api_key, true);
@@ -32,43 +38,39 @@ async function processMessage(message, index, array) {
       console.log("error");
     });
 
-    note = "----------------------------------------------------------------\n";
-    note += "Author: " + message.author + "\n";
-    note += "Subject: " + message.subject + "\n";
-    note += "Date: " + message.date + "\n";
+    title = TASK_TITLE.task_title.replace(/%S/, message.subject).replace(/%A/, message.author).replace(/%D/, message.date);
+    note = TASK_TEMPLATE.task_template.replace(/%S/, message.subject).replace(/%A/, message.author).replace(/%D/, message.date);
 
-    if (message.recipients.length > 0) {
-        note += "Recipients: ";
-        for (const recipient of message.recipients){
-		note += recipient + ", ";
-        }
-	note += "\n";
+    recipients = "";
+    for (const recipient of message.recipients){
+        recipients += recipient + ", ";
     }
 
-    if (message.ccList.length > 0) {
-        note += "CC: ";
-        for (const recipient of message.ccList){
-		note += recipient + ", ";
-        }
-	note += "\n";
+    title = title.replace(/%T/, recipients);
+    note = note.replace(/%T/, recipients);
+
+    ccList = "";
+    for (const recipient of message.ccList){
+        ccList += recipient + ", ";
     }
 
-    if (message.bccList.length > 0) {
-        note += "BCC: ";
-        for (const recipient of message.bccList){
-		note += recipient + ", ";
-        }
-	note += "\n";
+    title = title.replace(/%C/, ccList);
+    note = note.replace(/%C/, ccList);
+
+    bccList = "";
+    for (const recipient of message.bccList){
+        bccList += recipient + ", ";
     }
+
+    title = title.replace(/%B/, bccList);
+    note = note.replace(/%B/, bccList);
 
     msg = await messenger.messages.getFull(message.id);
-    console.log(msg);
+    messageText = processParts(msg.parts);
 
-    note += processParts(msg.parts);
+    note = note.replace(/%T/, messageText);
 
-    note += "----------------------------------------------------------------\n";
-
-    req.send('{"title": "' + message.subject + '", "note": ' + JSON.stringify(note) + ' }');
+    req.send('{"title": "' + title + '", "note": ' + JSON.stringify(note) + ' }');
 };
 
 async function startProcess(info) {
@@ -89,29 +91,4 @@ browser.menus.onShown.addListener((info) => {
   browser.menus.update("mail2task", { visible: oneMessage });
   browser.menus.refresh();
 });
-
-/*
- * FETCH CONFIGURATION VALUES
- */
-function onError(error) {
-  console.log(`Error: ${error}`);
-}
-
-function onGotURL(item) {
-  let url = "EVERDO_API_URL";
-  if (item.everdo_api_url) {
-    url = item.everdo_api_url;
-  }
-  EVERDO_API_URL = url;
-  console.log("EVERDO API URL: " + EVERDO_API_URL);
-}
-
-function onGotKey(item) {
-  let key = "EVERDO_API_KEY";
-  if (item.everdo_api_key) {
-    key = item.everdo_api_key;
-  }
-  EVERDO_API_KEY = key;
-  console.log("EVERDO API KEY: " + EVERDO_API_KEY);
-}
 
