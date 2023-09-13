@@ -65,8 +65,13 @@ async function processMessage(message, index, array) {
     title = title.replace(/%B/, bccList);
     note = note.replace(/%B/, bccList);
 
+    /*
     msg = await messenger.messages.getFull(message.id);
     messageText = processParts(msg.parts);
+    */
+
+    var editor = window.gMsgCompose.editor;
+    var messageText = editor.outputToString('text/plain', editor.eNone);
 
     note = note.replace(/%T/, messageText);
 
