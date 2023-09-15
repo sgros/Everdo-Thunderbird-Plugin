@@ -1,45 +1,63 @@
+/*
+Default settings. Initialize storage to these values.
+From: https://github.com/mdn/webextensions-examples/blob/main/stored-credentials/
+// TODO: create default values if none are already present
+*/
+let everdoPluginDataDefaultValues = {
+  everdo_api_url: "127.0.0.1:11111",
+  everdo_api_key: "",
+  task_template: "===============================================================\nAuthor: %A\nTo: %T\nCC: %C\nDate; %D\n===============================================================\n\n%T",
+  task_title: "%S",
+}
+
+function sendDesktopNotification(msg) {
+    browser.notifications.create({
+        type : 'basic',
+        message : msg,
+        title : 'Everdo Thundebird Plugin'
+    });
+}
+
+// TODO: Some messages don't have text/plain mime type, but only text/html
+// There is NPM module that converts HTML to TXT (https://www.npmjs.com/package/html-to-text)
+// How to include NPM modules in extensions?
 function processParts(parts) {
 
     let note = "";
 
     for (const part of parts) {
     	if (part.parts) {
-	    note += processParts(part.parts);
-    	} else if (part.contentType == "text/plain") {
-	    note += part.body;
-	}
+            note += processParts(part.parts);
+    	} else {
+            console.log(part.contentType);
+            if (part.contentType == "text/plain") {
+                note += part.body;
+            }
+        }
     }
 
     return note;
 }
 
 async function processMessage(message, index, array) {
-    let gettingUrl = browser.storage.sync.get("everdo_api_url");
-    EVERDO_URL = await gettingUrl;
-
-    let gettingKey = browser.storage.sync.get("everdo_api_key");
-    EVERDO_KEY = await gettingKey;
-
-    let taskTitle = browser.storage.sync.get("task_title");
-    TASK_TITLE = await taskTitle;
-
-    let taskTemplate = browser.storage.sync.get("task_template");
-    TASK_TEMPLATE = await taskTemplate;
+    let pluginData = await browser.storage.sync.get();
 
     var req = new XMLHttpRequest();
 
-    req.open("POST", EVERDO_URL.everdo_api_url + "/api/items?key=" + EVERDO_KEY.everdo_api_key, true);
+    console.log(pluginData['everdo_api_url'])
+    console.log(pluginData['everdo_api_key'])
+    req.open("POST", pluginData['everdo_api_url'] + "/api/items?key=" + pluginData['everdo_api_key'], true);
 
     req.setRequestHeader("Content-Type", "application/json");
-    req.addEventListener("timeout", function() {
+    req.addEventListener("timeout", function(event) {
       console.log("timeout");
     });
-    req.addEventListener("error", function() {
-      console.log("error");
+    req.addEventListener("error", function(event) {
+      console.log("error: " + req.status);
     });
 
-    title = TASK_TITLE.task_title.replace(/%S/, message.subject).replace(/%A/, message.author).replace(/%D/, message.date);
-    note = TASK_TEMPLATE.task_template.replace(/%S/, message.subject).replace(/%A/, message.author).replace(/%D/, message.date);
+    title = pluginData['task_title'].replace(/%S/, message.subject).replace(/%A/, message.author).replace(/%D/, message.date);
+    note = pluginData['task_template'].replace(/%S/, message.subject).replace(/%A/, message.author).replace(/%D/, message.date);
 
     recipients = "";
     for (const recipient of message.recipients){
@@ -65,17 +83,12 @@ async function processMessage(message, index, array) {
     title = title.replace(/%B/, bccList);
     note = note.replace(/%B/, bccList);
 
-    /*
     msg = await messenger.messages.getFull(message.id);
     messageText = processParts(msg.parts);
-    */
-
-    var editor = window.gMsgCompose.editor;
-    var messageText = editor.outputToString('text/plain', editor.eNone);
 
     note = note.replace(/%T/, messageText);
 
-    req.send('{"title": "' + title + '", "note": ' + JSON.stringify(note) + ' }');
+    await req.send('{"title": "' + title + '", "note": ' + JSON.stringify(note) + ' }');
 };
 
 async function startProcess(info) {

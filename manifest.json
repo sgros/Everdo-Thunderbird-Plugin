@@ -2,9 +2,11 @@
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
   "version": "2",
-  "applications": {
+  "author": "Stjepan Groš",
+  "browser_specific_settings": {
     "gecko": {
-      "id": "Everdo-Thunderbird-Plugin@sgros.github.io"
+      "id": "Everdo-Thunderbird-Plugin@sgros.github.io",
+      "strict_min_version": "105.0"
     }
   },
   "background": {
@@ -19,6 +21,7 @@
     "menus",
     "storage",
     "messagesRead",
+    "notifications",
     "<all_urls>"
   ],
   "default_locale": "en",

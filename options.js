@@ -27,7 +27,7 @@ function restoreOptions() {
   }
 
   function onError(error) {
-    console.log(`Error: ${error}`);
+    console.log(`Everdo plugin error: ${error}`);
   }
 
   let gettingUrl = browser.storage.sync.get("everdo_api_url");
